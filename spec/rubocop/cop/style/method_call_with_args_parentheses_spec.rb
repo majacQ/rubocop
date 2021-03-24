@@ -467,6 +467,17 @@ RSpec.describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
       RUBY
     end
 
+    it 'register an offense for parens in string interpolation' do
+      expect_offense(<<~'RUBY')
+        "#{t('no.parens')}"
+            ^^^^^^^^^^^^^ Omit parentheses for method calls with arguments.
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        "#{t 'no.parens'}"
+      RUBY
+    end
+
     it 'register an offense in complex conditionals' do
       expect_offense(<<~RUBY)
         def foo
@@ -658,6 +669,11 @@ RSpec.describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
       expect_no_offenses('foo &block')
     end
 
+    it 'accepts parens in yield argument method calls' do
+      expect_no_offenses('yield File.basepath(path)')
+      expect_no_offenses('yield path, File.basepath(path)')
+    end
+
     it 'accepts parens in super without args' do
       expect_no_offenses('super()')
     end
@@ -753,6 +769,16 @@ RSpec.describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
       expect_no_offenses('Something.find(criteria: given)&.field')
     end
 
+    it 'accepts parens in operator method calls' do
+      expect_no_offenses(<<~RUBY)
+        data.[](value)
+        data&.[](value)
+        string.<<(even_more_string)
+        ruby.==(good)
+        ruby&.===(better)
+      RUBY
+    end
+
     context 'allowing parenthesis in chaining' do
       let(:cop_config) do
         {
@@ -828,6 +854,22 @@ RSpec.describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
       it 'accepts parens for camel-case method names' do
         expect_no_offenses('Array(nil)')
       end
+    end
+  end
+
+  context 'allowing parens in string interpolation' do
+    let(:cop_config) do
+      {
+        'EnforcedStyle' => 'omit_parentheses',
+        'AllowParenthesesInStringInterpolation' => true
+      }
+    end
+
+    it 'accepts parens for camel-case method names' do
+      expect_no_offenses(<<~'RUBY')
+        "#{t('this.is.good')}"
+        "#{t 'this.is.also.good'}"
+      RUBY
     end
   end
 
