@@ -47,7 +47,7 @@ module RuboCop
       #
       #   end
       #
-      # @example AllowModifiersOnSymbols: true
+      # @example AllowModifiersOnSymbols: true (default)
       #   # good
       #   class Foo
       #
@@ -79,7 +79,7 @@ module RuboCop
 
         # @!method access_modifier_with_symbol?(node)
         def_node_matcher :access_modifier_with_symbol?, <<~PATTERN
-          (send nil? {:private :protected :public} (sym _))
+          (send nil? {:private :protected :public :module_function} (sym _))
         PATTERN
 
         def on_send(node)
