@@ -111,6 +111,9 @@ module RuboCop
 
           if rescued_exceptions.any?
             rescued_exceptions.each_with_object([]) do |exception, converted|
+              # FIXME: Workaround `rubocop:disable` comment for JRuby.
+              #        https://github.com/jruby/jruby/issues/6642
+              # rubocop:disable Style/RedundantBegin
               begin
                 RuboCop::Util.silence_warnings do
                   # Avoid printing deprecation warnings about constants
@@ -119,6 +122,7 @@ module RuboCop
               rescue NameError
                 converted << nil
               end
+              # rubocop:enable Style/RedundantBegin
             end
           else
             # treat an empty `rescue` as `rescue StandardError`
