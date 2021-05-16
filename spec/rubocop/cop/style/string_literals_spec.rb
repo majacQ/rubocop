@@ -206,10 +206,13 @@ RSpec.describe RuboCop::Cop::Style::StringLiterals, :config do
       expect_offense(<<~'RUBY')
         '\''
         ^^^^ Prefer double-quoted strings unless you need single quotes to avoid extra backslashes for escaping.
+        '\\'
+        ^^^^ Prefer double-quoted strings unless you need single quotes to avoid extra backslashes for escaping.
       RUBY
 
       expect_correction(<<~'RUBY')
         "'"
+        "\\"
       RUBY
     end
 
@@ -261,10 +264,12 @@ RSpec.describe RuboCop::Cop::Style::StringLiterals, :config do
         a = '\n'
         b = '"'
         c = '#{x}'
+        d = '#@x'
+        e = '#$x'
       RUBY
     end
 
-    it 'flags single quotes with plain # (not #@var or #{interpolation}' do
+    it 'flags single quotes with plain # (not #@var or #{interpolation} or #$global' do
       expect_offense(<<~RUBY)
         a = 'blah #'
             ^^^^^^^^ Prefer double-quoted strings unless you need single quotes to avoid extra backslashes for escaping.

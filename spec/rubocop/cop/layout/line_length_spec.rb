@@ -605,6 +605,34 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
         end
       end
 
+      context 'when unparenthesized' do
+        context 'when there is one argument' do
+          it 'does not autocorrect' do
+            expect_offense(<<~RUBY)
+              method_call xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                                                      ^^ Line is too long. [42/40]
+            RUBY
+
+            expect_no_corrections
+          end
+        end
+
+        context 'when there are multiple arguments' do
+          it 'splits the line after the first element' do
+            args = 'x' * 28
+            expect_offense(<<~RUBY, args: args)
+              method_call #{args}, abc
+                          _{args}^^^^^ Line is too long. [45/40]
+            RUBY
+
+            expect_correction(<<~RUBY, loop: false)
+              method_call #{args},#{trailing_whitespace}
+              abc
+            RUBY
+          end
+        end
+      end
+
       context 'when call with hash on same line' do
         it 'adds an offense only to outer and autocorrects it' do
           expect_offense(<<~RUBY)
@@ -725,6 +753,53 @@ RSpec.describe RuboCop::Cop::Layout::LineLength, :config do
             attr_reader :first_name, :last_name,#{trailing_whitespace}
             :email, :username, :country, :state, :city, :postal_code
           RUBY
+        end
+      end
+
+      context 'with a heredoc argument' do
+        it 'does not break up the line' do
+          args = 'x' * 25
+          expect_offense(<<~RUBY, args: args)
+            foo(<<~STRING, #{args}xxx)
+                           _{args}^^^^ Line is too long. [44/40]
+            STRING
+          RUBY
+
+          expect_no_corrections
+        end
+
+        context 'and other arguments before the heredoc' do
+          it 'can break up the line before the heredoc argument' do
+            args = 'x' * 20
+            expect_offense(<<~RUBY, args: args)
+              foo(abc, <<~STRING, #{args}xxx)
+                                  _{args}^^^^ Line is too long. [44/40]
+              STRING
+            RUBY
+
+            expect_correction(<<~RUBY)
+              foo(abc,#{trailing_whitespace}
+              <<~STRING, #{args}xxx)
+              STRING
+            RUBY
+          end
+        end
+
+        context 'and the heredoc is after the line should split' do
+          it 'can break up the line before the heredoc argument' do
+            args = 'x' * 34
+            expect_offense(<<~RUBY, args: args)
+              foo(#{args}, <<~STRING)
+                  _{args}  ^^^^^^^^^^ Line is too long. [50/40]
+              STRING
+            RUBY
+
+            expect_correction(<<~RUBY)
+              foo(#{args},#{trailing_whitespace}
+              <<~STRING)
+              STRING
+            RUBY
+          end
         end
       end
     end
